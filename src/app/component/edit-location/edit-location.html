@@ -1,0 +1,126 @@
+<div class="h-full overflow-y-auto">
+    <div class="mx-auto w-full max-w-2xl px-5 pb-6 lg:py-6">
+        <!-- Android layout_header -->
+        <header class="sticky top-0 z-[1001] -mx-5 flex h-14 items-center gap-1 bg-background px-5 lg:static lg:h-auto">
+            <button type="button" class="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-2xl text-primary" [attr.aria-label]="'back' | t" (click)="back()">
+                <app-icon name="back" />
+            </button>
+            <h1 class="page-title">{{ 'edit_location' | t }}</h1>
+        </header>
+
+        @if (loading()) {
+            <div class="mt-5 h-[200px] animate-pulse rounded-card bg-surface-variant" aria-hidden="true"></div>
+        } @else if (notFound() || !location()) {
+            <div class="flex flex-col items-center gap-3 py-10 text-center">
+                <p class="text-on-surface-variant" role="alert">{{ 'web_not_found' | t }}</p>
+                <a routerLink="/history" class="btn btn-secondary">{{ 'web_back_to_history' | t }}</a>
+            </div>
+        } @else {
+            <form class="flex flex-col" (submit)="$event.preventDefault(); save()">
+                @if (address()) {
+                    <p class="mt-2">{{ address() }}</p>
+                }
+
+                <!-- Android map card: fixed preview, the pin cannot be moved -->
+                <app-location-map
+                    class="mt-5 h-[200px] overflow-hidden rounded-card"
+                    [locations]="mapLocations()"
+                    [selectedId]="location()!.id"
+                    [interactive]="false"
+                    [centerOnUserFirstFix]="false"
+                />
+
+                <label for="location-name" class="mt-6 text-sm font-bold text-on-surface-variant">{{ 'display_name' | t }}</label>
+                <input
+                    id="location-name"
+                    name="displayName"
+                    type="text"
+                    class="mt-2 rounded-card border border-outline bg-surface p-4 text-base outline-none placeholder:text-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary"
+                    [placeholder]="'display_name' | t"
+                    [maxlength]="nameMaxLength"
+                    [ngModel]="name()"
+                    (ngModelChange)="name.set($event)"
+                />
+
+                <label for="location-notes" class="mt-6 text-sm font-bold text-on-surface-variant">{{ 'notes' | t }}</label>
+                <textarea
+                    id="location-notes"
+                    name="note"
+                    rows="3"
+                    class="mt-2 min-h-24 resize-y rounded-card border border-outline bg-surface p-4 text-base outline-none placeholder:text-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary"
+                    [placeholder]="'notes' | t"
+                    [maxlength]="noteMaxLength"
+                    [ngModel]="note()"
+                    (ngModelChange)="note.set($event)"
+                ></textarea>
+
+                <!-- Android chip group: always one category selected -->
+                <h2 id="category-label" class="mt-6 text-sm font-bold text-on-surface-variant">{{ 'category' | t }}</h2>
+                <div class="-mx-5 mt-2 flex gap-2 overflow-x-auto px-5 py-1" role="radiogroup" aria-labelledby="category-label">
+                    @for (chip of categoryChips(); track chip.category.id) {
+                        <button
+                            type="button"
+                            role="radio"
+                            class="filter-chip"
+                            [class.is-selected]="chip.selected"
+                            [style.--chip-color]="chip.category.color"
+                            [style.--chip-on]="chip.textOnColor"
+                            [attr.aria-checked]="chip.selected"
+                            (click)="categoryId.set(chip.category.id ?? null)"
+                        >
+                            @if (chip.icon.type === 'icon') {
+                                <svg viewBox="0 0 24 24" class="size-[1.125rem]" fill="currentColor" aria-hidden="true"><path [attr.d]="chip.icon.path" /></svg>
+                            } @else if (chip.icon.type === 'emoji') {
+                                <span aria-hidden="true">{{ chip.icon.emoji }}</span>
+                            }
+                            {{ chip.category.label | categoryLabel }}
+                        </button>
+                    }
+                </div>
+
+                <!-- Android coordinates card -->
+                <div class="mt-6 flex items-center gap-4 rounded-card bg-surface p-4">
+                    <app-icon name="my_location" class="text-2xl text-primary" />
+                    <div class="flex min-w-0 flex-1 flex-col">
+                        <h2 class="text-[11px] font-bold uppercase text-on-surface-variant">{{ 'coordinates' | t }}</h2>
+                        <p class="mt-1 text-sm">{{ coordinates() }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="flex size-11 shrink-0 items-center justify-center rounded-full text-xl text-primary-text hover:bg-surface-variant"
+                        [attr.aria-label]="'copy_coordinates' | t"
+                        [title]="'copy_coordinates' | t"
+                        (click)="copyCoordinates()"
+                    >
+                        <app-icon name="copy" />
+                    </button>
+                </div>
+
+                @if (error()) {
+                    <p class="alert mt-6" role="alert">{{ error()! | t }}</p>
+                }
+
+                <!-- Widget.App.Button.Save -->
+                <button
+                    type="submit"
+                    class="mt-8 flex h-14 items-center justify-center rounded-button bg-primary-fill text-base font-bold text-on-primary transition hover:brightness-95 disabled:cursor-progress disabled:opacity-90"
+                    [disabled]="saving()"
+                    [attr.aria-busy]="saving()"
+                >
+                    {{ (saving() ? 'web_saving' : 'save_changes') | t }}
+                </button>
+
+                <!-- btnDeleteLocation: outlined, red -->
+                <button
+                    type="button"
+                    class="mt-4 flex h-14 items-center justify-center gap-2 rounded-button border border-outline text-base font-bold text-error transition hover:bg-error/10"
+                    (click)="askDelete()"
+                >
+                    <app-icon name="delete" class="text-xl" /> {{ 'delete_location' | t }}
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+<app-confirm-delete-dialog title="delete_confirmation_title" message="delete_confirmation_message" />

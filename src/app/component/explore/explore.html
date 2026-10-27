@@ -1,0 +1,258 @@
+@if (isMobile()) {
+    <!-- Android fragment_explore: full map, floating search card, center FAB and the bottom sheet with the list -->
+    <div class="relative h-full overflow-hidden">
+        <app-location-map
+            class="absolute inset-0"
+            [zoomControl]="false"
+            attributionPosition="bottomleft"
+            [bottomInset]="mapBottomInset()"
+            [locations]="filteredLocations()"
+            [userPosition]="userPosition()"
+            [selectedId]="selectedId()"
+            (selectLocation)="select($event)"
+        />
+
+        <!-- Android search_bar_container -->
+        <form class="absolute inset-x-4 top-4 z-[1002] flex items-center gap-3 rounded-xl bg-surface-container px-3 py-[18px] shadow-lg focus-within:ring-2 focus-within:ring-primary" role="search" (ngSubmit)="submitSearch(searchInput)">
+            <app-icon name="search" class="text-xl text-on-surface-variant" />
+            <input
+                #searchInput
+                type="search"
+                enterkeyhint="search"
+                class="w-full bg-transparent text-base outline-none placeholder:text-on-surface-variant"
+                [attr.aria-label]="'search_saved_places' | t"
+                [placeholder]="'search_saved_places' | t"
+                [ngModel]="search()"
+                (ngModelChange)="search.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+                (focus)="sheetState.set('expanded')"
+            />
+        </form>
+
+        <!-- btn_center_location: anchored to the top of the sheet -->
+        @if (sheetState() !== 'expanded' && locationService()) {
+            <button
+                type="button"
+                class="absolute right-6 z-[1001] flex size-14 items-center justify-center rounded-2xl bg-background text-2xl text-primary shadow-lg"
+                [style.bottom.px]="mapBottomInset() + 10"
+                [attr.aria-label]="'current_location' | t"
+                [title]="'current_location' | t"
+                (click)="centerOnUser()"
+            >
+                <app-icon name="my_location" />
+            </button>
+        }
+
+        <app-bottom-sheet [(state)]="sheetState">
+            <div sheetHeader>
+                <!-- Android btnSavePosition -->
+                <button
+                    type="button"
+                    class="flex h-[90px] w-full flex-col items-center justify-center rounded-[32px] bg-primary-fill text-white shadow-md transition active:brightness-95 disabled:cursor-progress"
+                    [disabled]="saving()"
+                    [attr.aria-busy]="saving()"
+                    (click)="saveCurrentPosition()"
+                >
+                    <span class="flex items-center gap-3">
+                        <app-icon name="location_plus" class="text-[32px]" [class.animate-pulse]="saving()" />
+                        <span class="text-[22px] font-bold leading-tight">{{ 'save_current_position' | t }}</span>
+                    </span>
+                    <span class="mt-1 text-xs tracking-[0.1em] opacity-80">{{ (saving() ? 'web_getting_location' : 'save_instantly') | t }}</span>
+                </button>
+
+                @if (saveError()) {
+                    <p class="alert mt-3" role="alert">{{ saveError()! | t }}</p>
+                }
+
+                <h2 class="mt-6 text-xl font-bold">{{ 'recent_locations' | t }}</h2>
+            </div>
+
+            <div sheetBody class="pb-4 pt-4">
+                @if (loading()) {
+                    @for (placeholder of [1, 2, 3]; track placeholder) {
+                        <div class="mb-3 flex animate-pulse items-center gap-4 rounded-3xl border border-outline bg-surface-container p-3" aria-hidden="true">
+                            <div class="size-20 rounded-xl bg-surface-variant"></div>
+                            <div class="flex flex-1 flex-col gap-2">
+                                <div class="h-4 w-2/3 rounded bg-surface-variant"></div>
+                                <div class="h-3 w-1/2 rounded bg-surface-variant"></div>
+                            </div>
+                        </div>
+                    }
+                } @else if (loadError()) {
+                    <div class="flex flex-col items-center gap-3 py-6 text-center">
+                        <p class="text-on-surface-variant" role="alert">{{ loadError()! | t }}</p>
+                        <button type="button" class="btn btn-secondary" (click)="load()">{{ 'web_try_again' | t }}</button>
+                    </div>
+                } @else if (locations().length === 0) {
+                    <div class="flex flex-col items-center gap-2 py-6 text-center">
+                        <p class="font-semibold">{{ 'web_empty_title' | t }}</p>
+                        <p class="text-sm text-on-surface-variant">{{ 'web_empty_body' | t }}</p>
+                    </div>
+                } @else if (filteredLocations().length === 0) {
+                    <p class="py-6 text-center text-on-surface-variant">{{ 'web_no_results' | t }}</p>
+                } @else {
+                    <app-location-list [locations]="filteredLocations()" [selectedId]="selectedId()" [query]="search()" (open)="actions.open($event)" (deleted)="removeLocation($event)" />
+                }
+            </div>
+        </app-bottom-sheet>
+    </div>
+} @else {
+    <!-- Desktop: list beside the map -->
+    <div class="grid h-full grid-cols-[minmax(0,26rem)_1fr] gap-6 p-6">
+        <section class="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1" [attr.aria-label]="'web_saved_locations' | t">
+            <!-- Always visible at the top of the panel while the list scrolls -->
+            <div class="sticky top-0 z-10 flex flex-col gap-3 bg-background pb-1">
+                <button
+                    type="button"
+                    class="flex items-center justify-between gap-4 rounded-[2rem] bg-primary-fill p-5 text-on-primary transition hover:brightness-95 disabled:cursor-progress disabled:opacity-90"
+                    [disabled]="saving()"
+                    [attr.aria-busy]="saving()"
+                    (click)="saveCurrentPosition()"
+                >
+                    <span class="flex flex-col items-start gap-1 text-left">
+                        <span class="text-xs font-semibold tracking-widest opacity-80">{{ (saving() ? 'web_getting_location' : 'save_instantly') | t }}</span>
+                        <span class="text-xl font-bold">{{ 'save_current_position' | t }}</span>
+                        @if (userPosition(); as position) {
+                            <span class="font-mono text-xs opacity-80">
+                                {{ position.latitude.toFixed(5) }}, {{ position.longitude.toFixed(5) }} · ±{{ position.accuracy.toFixed(0) }} m
+                            </span>
+                        }
+                    </span>
+                    <span class="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/20 text-3xl" [class.animate-pulse]="saving()">
+                        <app-icon name="location_plus" />
+                    </span>
+                </button>
+
+                @if (saveError()) {
+                    <p class="alert" role="alert">{{ saveError()! | t }}</p>
+                }
+            </div>
+
+            <div class="card flex flex-col gap-3">
+                <label class="search-field">
+                    <app-icon name="search" class="text-on-surface-variant" />
+                    <span class="sr-only">{{ 'search_saved_places' | t }}</span>
+                    <input type="search" [placeholder]="'search_saved_places' | t" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+                </label>
+
+                @if (categoryChips().length > 0) {
+                    <div class="flex flex-wrap gap-2" role="group" [attr.aria-label]="'web_filter_by_category' | t">
+                        <button type="button" class="chip" [class.is-active]="categoryFilter() === null" [attr.aria-pressed]="categoryFilter() === null" (click)="categoryFilter.set(null)">
+                            {{ 'all' | t }} <span class="chip-count">{{ locations().length }}</span>
+                        </button>
+                        @for (chip of categoryChips(); track chip.category.id) {
+                            <button
+                                type="button"
+                                class="chip"
+                                [class.is-active]="categoryFilter() === chip.category.id"
+                                [attr.aria-pressed]="categoryFilter() === chip.category.id"
+                                [style.--chip-color]="chip.category.color"
+                                (click)="toggleCategoryFilter(chip.category.id)"
+                            >
+                                <span class="chip-dot"></span>
+                                {{ chip.category.label | categoryLabel }} <span class="chip-count">{{ chip.count }}</span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="flex items-center justify-between px-1">
+                <h2 class="text-lg font-bold">{{ 'recent_locations' | t }}</h2>
+                @if (!loading() && !loadError()) {
+                    <span class="text-sm text-on-surface-variant">{{ 'web_count_of' | t: filteredLocations().length : locations().length }}</span>
+                }
+            </div>
+
+            @if (loading()) {
+                @for (placeholder of [1, 2, 3]; track placeholder) {
+                    <div class="flex animate-pulse items-center gap-3 rounded-3xl border border-outline bg-surface p-3" aria-hidden="true">
+                        <div class="size-11 rounded-button bg-surface-variant"></div>
+                        <div class="flex flex-1 flex-col gap-2">
+                            <div class="h-4 w-2/3 rounded bg-surface-variant"></div>
+                            <div class="h-3 w-1/2 rounded bg-surface-variant"></div>
+                        </div>
+                    </div>
+                }
+            } @else if (loadError()) {
+                <div class="card flex flex-col items-center gap-3 text-center">
+                    <p class="text-on-surface-variant" role="alert">{{ loadError()! | t }}</p>
+                    <button type="button" class="btn btn-secondary" (click)="load()">{{ 'web_try_again' | t }}</button>
+                </div>
+            } @else if (locations().length === 0) {
+                <div class="card flex flex-col items-center gap-2 text-center">
+                    <app-icon name="location" class="text-4xl text-primary" />
+                    <p class="font-semibold">{{ 'web_empty_title' | t }}</p>
+                    <p class="text-sm text-on-surface-variant">{{ 'web_empty_body' | t }}</p>
+                </div>
+            } @else if (filteredLocations().length === 0) {
+                <p class="card text-center text-on-surface-variant">{{ 'web_no_results' | t }}</p>
+            } @else {
+                <ul class="flex flex-col gap-3">
+                    @for (location of filteredLocations(); track location.id) {
+                        <!-- The category color marks the selected location -->
+                        <li
+                            [id]="'location-' + location.id"
+                            class="flex flex-col gap-3 rounded-3xl border bg-surface p-3"
+                            [class]="selectedId() === location.id ? 'border-(--category-color) shadow-[inset_4px_0_0_var(--category-color)]' : 'border-outline'"
+                            [style.--category-color]="location.category?.color ?? 'var(--color-on-surface-variant)'"
+                        >
+                            <button type="button" class="flex w-full items-start gap-3 rounded-button text-left" [attr.aria-current]="selectedId() === location.id" (click)="actions.open(location.id)">
+                                <app-category-icon [category]="location.category" />
+
+                                <span class="flex min-w-0 flex-1 flex-col gap-1">
+                                    <span class="flex items-start justify-between gap-2">
+                                        <span class="truncate text-base font-bold">{{ location.displayName || ('saved_location_default' | t) }}</span>
+                                        <span class="shrink-0 text-xs text-on-surface-variant">{{ location.date | relativeDate }}</span>
+                                    </span>
+                                    @if (location.address) {
+                                        <span class="truncate text-sm text-on-surface-variant">{{ location.address }}</span>
+                                    }
+                                    @if (location.category) {
+                                        <span class="badge" [style.--badge-color]="location.category.color">{{ location.category.label | categoryLabel }}</span>
+                                    }
+                                </span>
+                            </button>
+
+                            <div class="flex items-center justify-end gap-2 border-t border-outline pt-3">
+                                @if (confirmDeleteId() === location.id) {
+                                    <span class="mr-auto text-sm font-semibold">{{ 'delete_confirmation_title' | t }}</span>
+                                    <button type="button" class="action" (click)="confirmDeleteId.set(null)">{{ 'cancel' | t }}</button>
+                                    <button type="button" class="action text-error" (click)="delete(location)">
+                                        <app-icon name="delete" /> {{ 'delete' | t }}
+                                    </button>
+                                } @else {
+                                    <button type="button" class="action action-link mr-auto" (click)="selectedId.set(location.id)">
+                                        <app-icon name="map" /> {{ 'web_show_on_map' | t }}
+                                    </button>
+                                    <button type="button" class="action icon-only" [attr.aria-label]="'share' | t" [title]="'share' | t" (click)="actions.share(location)">
+                                        <app-icon name="share" />
+                                    </button>
+                                    <button type="button" class="action icon-only" [attr.aria-label]="'delete' | t" [title]="'delete' | t" (click)="requestDelete(location)">
+                                        <app-icon name="delete" />
+                                    </button>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="relative overflow-hidden rounded-card border border-outline" [attr.aria-label]="'map' | t">
+            <app-location-map class="size-full" [locations]="filteredLocations()" [userPosition]="userPosition()" [selectedId]="selectedId()" (selectLocation)="select($event)" />
+
+            @if (locationService()) {
+                <button
+                    type="button"
+                    class="absolute bottom-6 right-4 z-[1000] flex size-12 items-center justify-center rounded-full border border-outline bg-background text-2xl text-primary transition-transform hover:scale-105"
+                    [attr.aria-label]="'current_location' | t"
+                    [title]="'current_location' | t"
+                    (click)="centerOnUser()"
+                >
+                    <app-icon name="my_location" />
+                </button>
+            }
+        </section>
+    </div>
+}

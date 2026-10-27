@@ -1,0 +1,12 @@
+<!-- Header: drags the sheet (touch-action none so the browser does not scroll instead) -->
+<div class="shrink-0 touch-none select-none pt-2.5" (pointerdown)="onPointerDown($event)">
+    <!-- Android bg_drag_handle -->
+    <button type="button" class="mx-auto mb-2.5 flex h-4 w-16 items-center justify-center" aria-hidden="true" tabindex="-1" (click)="toggle()">
+        <span class="h-1 w-10 rounded-sm bg-drag-handle"></span>
+    </button>
+    <ng-content select="[sheetHeader]" />
+</div>
+
+<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-sheet-body>
+    <ng-content select="[sheetBody]" />
+</div>

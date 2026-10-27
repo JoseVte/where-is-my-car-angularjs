@@ -1,0 +1,180 @@
+<div class="h-full overflow-y-auto">
+    <div class="mx-auto w-full max-w-3xl px-4 pb-6 lg:px-6 lg:py-6">
+        <!-- Android layout_header: back to the map and title -->
+        <header class="sticky top-0 z-[1001] -mx-4 flex h-14 items-center gap-1 bg-background px-4 lg:static lg:mx-0 lg:mb-2 lg:h-auto lg:px-0">
+            <a routerLink="/map" class="-ml-2 flex size-11 items-center justify-center rounded-full text-2xl lg:hidden" [attr.aria-label]="'back' | t">
+                <app-icon name="back" />
+            </a>
+            <h1 class="page-title">{{ 'history' | t }}</h1>
+        </header>
+
+        <!-- Android search_container with the filters button -->
+        <div class="mt-2 flex h-14 items-center rounded-xl bg-surface-container pl-4 pr-1 focus-within:ring-2 focus-within:ring-primary">
+            <app-icon name="search" class="text-xl text-on-surface-variant" />
+            <input
+                type="search"
+                class="ml-3 h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-on-surface-variant"
+                [attr.aria-label]="'search_saved_places' | t"
+                [placeholder]="'search_saved_places' | t"
+                [ngModel]="search()"
+                (ngModelChange)="search.set($event)"
+            />
+            <button
+                type="button"
+                class="relative flex size-12 shrink-0 items-center justify-center rounded-full text-xl"
+                [class]="filtersOpen() ? 'text-primary-text' : 'text-on-surface-variant'"
+                aria-controls="history-filters"
+                [attr.aria-expanded]="filtersOpen()"
+                [attr.aria-label]="'filters' | t"
+                [title]="'filters' | t"
+                (click)="filtersOpen.set(!filtersOpen())"
+            >
+                <app-icon name="filters" />
+            </button>
+        </div>
+
+        @if (filtersOpen()) {
+            <div id="history-filters" class="mt-2 flex flex-col">
+                <!-- date_filters_container -->
+                <div class="-mx-4 flex gap-2 overflow-x-auto px-4 py-1.5" role="group" [attr.aria-label]="'filter_date' | t">
+                    @if (preset()) {
+                        <button type="button" class="filter-chip" (click)="selectPreset(null)">
+                            <app-icon name="time" class="text-lg" /> {{ 'all' | t }}
+                        </button>
+                    }
+                    @for (option of presets; track option) {
+                        <button
+                            type="button"
+                            class="filter-chip"
+                            [class.is-selected]="preset() === option"
+                            [style.--chip-color]="preset() === option ? 'var(--color-primary-fill)' : null"
+                            [attr.aria-pressed]="preset() === option"
+                            (click)="selectPreset(option)"
+                        >
+                            <app-icon name="time" class="text-lg" /> {{ option | t }}
+                        </button>
+                    }
+                    <button
+                        type="button"
+                        class="filter-chip"
+                        [class.is-selected]="preset() === 'custom'"
+                        [style.--chip-color]="preset() === 'custom' ? 'var(--color-primary-fill)' : null"
+                        [attr.aria-pressed]="preset() === 'custom'"
+                        aria-haspopup="dialog"
+                        (click)="openCustomRange()"
+                    >
+                        <app-icon name="time" class="text-lg" /> {{ customLabel() ?? ('custom' | t) + '…' }}
+                    </button>
+                </div>
+
+                <!-- categories_container -->
+                <div class="-mx-4 flex gap-2 overflow-x-auto px-4 py-1.5" role="group" [attr.aria-label]="'category' | t">
+                    @if (categoryIds().size > 0) {
+                        <button type="button" class="filter-chip" (click)="clearCategories()">
+                            <app-icon name="map" class="text-lg" /> {{ 'all' | t }}
+                        </button>
+                    }
+                    @for (chip of categoryChips(); track chip.category.id) {
+                        <button
+                            type="button"
+                            class="filter-chip"
+                            [class.is-selected]="chip.selected"
+                            [style.--chip-color]="chip.category.color"
+                            [style.--chip-on]="chip.textOnColor"
+                            [attr.aria-pressed]="chip.selected"
+                            (click)="toggleCategory(chip.category.id)"
+                        >
+                            @if (chip.icon.type === 'icon') {
+                                <svg viewBox="0 0 24 24" class="size-[1.125rem]" fill="currentColor" aria-hidden="true"><path [attr.d]="chip.icon.path" /></svg>
+                            } @else if (chip.icon.type === 'emoji') {
+                                <span aria-hidden="true">{{ chip.icon.emoji }}</span>
+                            }
+                            {{ chip.category.label | categoryLabel }}
+                        </button>
+                    }
+                </div>
+            </div>
+        } @else if (hasActiveFilters()) {
+            <!-- active_filters_group: visible while the panel is closed -->
+            <div class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 py-0.5">
+                @if (preset(); as active) {
+                    <button type="button" class="active-filter-chip" [attr.aria-label]="'web_remove_filter' | t: (customLabel() ?? (active | t))" (click)="selectPreset(null)">
+                        <app-icon name="time" class="text-lg" />
+                        {{ customLabel() ?? (active | t) }}
+                        <app-icon name="close" class="text-base" />
+                    </button>
+                }
+                @for (chip of categoryChips(); track chip.category.id) {
+                    @if (chip.selected) {
+                        <button
+                            type="button"
+                            class="active-filter-chip"
+                            [style.--chip-color]="chip.category.color"
+                            [attr.aria-label]="'web_remove_filter' | t: (chip.category.label | categoryLabel)"
+                            (click)="toggleCategory(chip.category.id)"
+                        >
+                            @if (chip.icon.type === 'icon') {
+                                <svg viewBox="0 0 24 24" class="size-[1.125rem]" fill="currentColor" aria-hidden="true"><path [attr.d]="chip.icon.path" /></svg>
+                            } @else if (chip.icon.type === 'emoji') {
+                                <span aria-hidden="true">{{ chip.icon.emoji }}</span>
+                            }
+                            {{ chip.category.label | categoryLabel }}
+                            <app-icon name="close" class="text-base" />
+                        </button>
+                    }
+                }
+            </div>
+        }
+
+        <div class="mt-4">
+            @if (loading()) {
+                @for (placeholder of [1, 2, 3]; track placeholder) {
+                    <div class="mb-3 flex animate-pulse items-center gap-4 rounded-3xl border border-outline bg-surface-container p-3" aria-hidden="true">
+                        <div class="size-20 rounded-xl bg-surface-variant"></div>
+                        <div class="flex flex-1 flex-col gap-2">
+                            <div class="h-4 w-2/3 rounded bg-surface-variant"></div>
+                            <div class="h-3 w-1/2 rounded bg-surface-variant"></div>
+                        </div>
+                    </div>
+                }
+            } @else if (loadError()) {
+                <div class="flex flex-col items-center gap-3 py-6 text-center">
+                    <p class="text-on-surface-variant" role="alert">{{ 'web_load_error' | t }}</p>
+                    <button type="button" class="btn btn-secondary" (click)="load()">{{ 'web_try_again' | t }}</button>
+                </div>
+            } @else if (locations().length === 0) {
+                <div class="flex flex-col items-center gap-2 py-6 text-center">
+                    <p class="font-semibold">{{ 'web_empty_title' | t }}</p>
+                    <p class="text-sm text-on-surface-variant">{{ 'web_empty_body' | t }}</p>
+                </div>
+            } @else if (results().length === 0) {
+                <p class="py-6 text-center text-on-surface-variant">{{ 'web_no_results' | t }}</p>
+            } @else {
+                <app-location-list [locations]="results()" [query]="search()" (open)="actions.open($event)" (deleted)="removeLocation($event)" />
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Android MaterialDatePicker range -->
+<dialog
+    #rangeDialog
+    class="m-auto w-[min(90vw,24rem)] rounded-3xl bg-surface p-6 text-on-surface shadow-xl backdrop:bg-black/40"
+    aria-labelledby="range-dialog-title"
+>
+    <form class="flex flex-col gap-4" (submit)="$event.preventDefault(); applyCustomRange()">
+        <h2 id="range-dialog-title" class="text-xl font-bold">{{ 'select_date_range' | t }}</h2>
+        <label class="flex flex-col gap-1 text-sm font-semibold">
+            {{ 'web_date_from' | t }}
+            <input type="date" class="input pt-3" required [max]="today" [value]="draftStart()" (input)="draftStart.set($any($event.target).value)" />
+        </label>
+        <label class="flex flex-col gap-1 text-sm font-semibold">
+            {{ 'web_date_to' | t }}
+            <input type="date" class="input pt-3" required [max]="today" [value]="draftEnd()" (input)="draftEnd.set($any($event.target).value)" />
+        </label>
+        <div class="mt-2 flex justify-end gap-2">
+            <button type="button" class="action min-h-11 px-4" (click)="rangeDialog.close()">{{ 'cancel' | t }}</button>
+            <button type="submit" class="action min-h-11 px-4 text-primary-text">{{ 'save' | t }}</button>
+        </div>
+    </form>
+</dialog>

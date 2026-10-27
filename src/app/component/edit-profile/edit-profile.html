@@ -1,0 +1,91 @@
+<ng-template #statusMessage let-status>
+    @if (status) {
+        @if (status.error) {
+            <p class="alert" role="alert">{{ status.error }}</p>
+        } @else {
+            <p class="rounded-button bg-surface-variant px-4 py-3 text-sm" role="status">{{ status.success }}</p>
+        }
+    }
+</ng-template>
+
+<div class="h-full overflow-y-auto">
+    <div class="mx-auto w-full max-w-2xl px-4 pb-8 lg:px-6 lg:py-6">
+        <header class="sticky top-0 z-[1001] -mx-4 flex h-14 items-center gap-1 bg-background px-4 lg:static lg:mx-0 lg:h-auto lg:px-0">
+            <button type="button" class="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-2xl text-primary" [attr.aria-label]="'back' | t" (click)="back()">
+                <app-icon name="back" />
+            </button>
+            <h1 class="page-title">{{ 'web_edit_profile' | t }}</h1>
+        </header>
+
+        <!-- Name -->
+        <h2 class="settings-header">{{ 'display_name' | t }}</h2>
+        <form #nameForm="ngForm" class="flex flex-col gap-4 rounded-card bg-surface p-4" (ngSubmit)="saveName(nameForm)">
+            <div class="field">
+                <input id="profile-name" name="name" type="text" class="input" placeholder=" " autocomplete="name" required [maxlength]="nameMaxLength" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+                <label for="profile-name" class="field-label">{{ 'display_name' | t }}</label>
+            </div>
+            <ng-container *ngTemplateOutlet="statusMessage; context: { $implicit: nameStatus() }" />
+            <button type="submit" class="btn btn-primary w-full" [disabled]="saving() === 'name' || nameForm.invalid">
+                {{ (saving() === 'name' ? 'web_saving' : 'save_changes') | t }}
+            </button>
+        </form>
+
+        @if (hasPassword()) {
+            <!-- Email: Firebase sends a confirmation link to the new address -->
+            <h2 class="settings-header">{{ 'web_change_email' | t }}</h2>
+            <form #emailForm="ngForm" class="flex flex-col gap-4 rounded-card bg-surface p-4" (ngSubmit)="saveEmail(emailForm)">
+                <p class="text-sm text-on-surface-variant">{{ 'web_current_email' | t: (user()?.email ?? '') }}</p>
+                <div class="field">
+                    <input id="profile-email" name="newEmail" type="email" class="input" placeholder=" " autocomplete="email" required email [ngModel]="newEmail()" (ngModelChange)="newEmail.set($event)" />
+                    <label for="profile-email" class="field-label">{{ 'web_new_email' | t }}</label>
+                </div>
+                <div class="field">
+                    <input id="profile-email-password" name="emailPassword" type="password" class="input" placeholder=" " autocomplete="current-password" required [ngModel]="emailPassword()" (ngModelChange)="emailPassword.set($event)" />
+                    <label for="profile-email-password" class="field-label">{{ 'web_current_password' | t }}</label>
+                </div>
+                <ng-container *ngTemplateOutlet="statusMessage; context: { $implicit: emailStatus() }" />
+                <button type="submit" class="btn btn-primary w-full" [disabled]="saving() === 'email' || emailForm.invalid">
+                    {{ (saving() === 'email' ? 'web_saving' : 'web_change_email') | t }}
+                </button>
+            </form>
+
+            <!-- Password -->
+            <h2 class="settings-header">{{ 'web_change_password' | t }}</h2>
+            <form #passwordForm="ngForm" class="flex flex-col gap-4 rounded-card bg-surface p-4" (ngSubmit)="savePassword(passwordForm)">
+                <div class="field">
+                    <input id="profile-current-password" name="currentPassword" type="password" class="input" placeholder=" " autocomplete="current-password" required [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)" />
+                    <label for="profile-current-password" class="field-label">{{ 'web_current_password' | t }}</label>
+                </div>
+                <div>
+                    <div class="field">
+                        <input
+                            id="profile-new-password"
+                            name="newPassword"
+                            type="password"
+                            class="input"
+                            placeholder=" "
+                            autocomplete="new-password"
+                            required
+                            aria-describedby="profile-password-hint"
+                            [minlength]="passwordMinLength"
+                            [ngModel]="newPassword()"
+                            (ngModelChange)="newPassword.set($event)"
+                        />
+                        <label for="profile-new-password" class="field-label">{{ 'web_new_password' | t }}</label>
+                    </div>
+                    <p id="profile-password-hint" class="mt-1 px-1 text-xs text-on-surface-variant">{{ 'web_password_hint' | t: passwordMinLength }}</p>
+                </div>
+                <div class="field">
+                    <input id="profile-repeat-password" name="repeatPassword" type="password" class="input" placeholder=" " autocomplete="new-password" required [ngModel]="repeatPassword()" (ngModelChange)="repeatPassword.set($event)" />
+                    <label for="profile-repeat-password" class="field-label">{{ 'web_repeat_password' | t }}</label>
+                </div>
+                <ng-container *ngTemplateOutlet="statusMessage; context: { $implicit: passwordStatus() }" />
+                <button type="submit" class="btn btn-primary w-full" [disabled]="saving() === 'password' || passwordForm.invalid">
+                    {{ (saving() === 'password' ? 'web_saving' : 'web_change_password') | t }}
+                </button>
+            </form>
+        } @else {
+            <p class="mt-6 rounded-card bg-surface p-4 text-sm text-on-surface-variant">{{ 'web_external_account_hint' | t }}</p>
+        }
+    </div>
+</div>

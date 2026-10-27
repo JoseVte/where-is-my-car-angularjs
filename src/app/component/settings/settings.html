@@ -1,0 +1,118 @@
+<div class="h-full overflow-y-auto">
+    <div class="mx-auto w-full max-w-2xl px-4 pb-8 lg:px-6 lg:py-6">
+        <!-- Android layout_header -->
+        <header class="sticky top-0 z-[1001] -mx-4 flex h-14 items-center gap-1 bg-background px-4 lg:static lg:mx-0 lg:h-auto lg:px-0">
+            <button type="button" class="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-2xl text-primary lg:hidden" [attr.aria-label]="'back' | t" (click)="back()">
+                <app-icon name="back" />
+            </button>
+            <h1 class="page-title">{{ 'settings' | t }}</h1>
+        </header>
+
+        <!-- Android pref_sync_card_logged_in, without the sync parts -->
+        <h2 class="settings-header">{{ 'web_account' | t }}</h2>
+        <section class="rounded-card bg-surface p-4">
+            <div class="flex items-center gap-4">
+                @if (user()?.photoURL && !photoFailed()) {
+                    <img [src]="user()!.photoURL" alt="" referrerpolicy="no-referrer" class="size-16 shrink-0 rounded-full border-[1.5px] border-on-surface object-cover" (error)="photoFailed.set(true)" />
+                } @else {
+                    <span class="flex size-16 shrink-0 items-center justify-center rounded-full border-[1.5px] border-on-surface bg-primary-fill text-2xl font-bold text-on-primary" aria-hidden="true">{{ initial() }}</span>
+                }
+                <div class="flex min-w-0 flex-col">
+                    <span class="truncate text-lg font-bold">{{ user()?.displayName || ('app_name' | t) }}</span>
+                    <span class="truncate text-sm text-on-surface-variant">{{ user()?.email }}</span>
+                </div>
+            </div>
+
+            <a routerLink="/settings/profile" class="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-card bg-surface-variant font-semibold transition-colors hover:bg-surface-variant-strong">
+                <app-icon name="edit" class="text-xl" /> {{ 'web_edit_profile' | t }}
+            </a>
+
+            <div class="mt-2 grid grid-cols-2 gap-2">
+                <a routerLink="/history" class="flex flex-col gap-1 rounded-card bg-surface-variant p-4 transition-colors hover:bg-surface-variant-strong">
+                    <span class="flex items-center gap-1.5 text-[11px] font-bold uppercase text-on-surface-variant">
+                        <app-icon name="location" class="text-base text-[#2196F3]" /> {{ 'locations' | t }}
+                    </span>
+                    <span class="text-xl font-bold">{{ locationCount() ?? '–' }}</span>
+                </a>
+                <a routerLink="/categories" class="flex flex-col gap-1 rounded-card bg-surface-variant p-4 transition-colors hover:bg-surface-variant-strong">
+                    <span class="flex items-center gap-1.5 text-[11px] font-bold uppercase text-on-surface-variant">
+                        <app-icon name="tags" class="text-base text-primary" /> {{ 'categories' | t }}
+                    </span>
+                    <span class="text-xl font-bold">{{ categoryCount() ?? '–' }}</span>
+                </a>
+            </div>
+
+            <button type="button" class="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-card bg-surface-variant font-semibold text-error transition-colors hover:bg-surface-variant-strong" (click)="logout()">
+                <app-icon name="logout" class="text-xl" /> {{ 'sign_out' | t }}
+            </button>
+        </section>
+
+        <!-- Android pref_theme_toggle -->
+        <h2 id="appearance-label" class="settings-header">{{ 'appearance' | t }}</h2>
+        <section class="rounded-card bg-surface p-4">
+            <div class="segmented" role="radiogroup" aria-labelledby="appearance-label">
+                @for (option of themeOptions; track option.value) {
+                    <button type="button" role="radio" [attr.aria-checked]="theme.selection() === option.value" (click)="theme.setTheme(option.value)">{{ option.label | t }}</button>
+                }
+            </div>
+        </section>
+
+        <!-- Android pref_language_toggle: changing it reloads, like Android recreating the activity -->
+        <h2 id="language-label" class="settings-header">{{ 'language' | t }}</h2>
+        <section class="rounded-card bg-surface p-4">
+            <div class="segmented" role="radiogroup" aria-labelledby="language-label">
+                @for (option of languageOptions; track option.value) {
+                    <button type="button" role="radio" [attr.aria-checked]="i18n.selection === option.value" (click)="option.value !== i18n.selection && i18n.setLanguage(option.value)">{{ option.label | t }}</button>
+                }
+            </div>
+        </section>
+
+        <!-- Android pref_app_settings_card -->
+        <h2 class="settings-header">{{ 'app_settings_header' | t }}</h2>
+        <section class="flex flex-col rounded-card bg-surface">
+            <a routerLink="/categories" class="settings-row rounded-t-card hover:bg-surface-variant">
+                <span class="settings-tile bg-[#FF9500]"><app-icon name="tags" /></span>
+                <span class="flex-1 text-base">{{ 'manage_categories' | t }}</span>
+                <app-icon name="back" class="rotate-180 text-xl text-on-surface-variant" />
+            </a>
+
+            <div class="settings-row">
+                <span class="settings-tile bg-primary-fill"><app-icon name="location" /></span>
+                <span class="flex min-w-0 flex-1 flex-col">
+                    <span id="location-service-title" class="text-base">{{ 'location_service_title' | t }}</span>
+                    <span id="location-service-summary" class="mt-1 text-xs text-on-surface-variant">{{ 'location_service_summary' | t }}</span>
+                </span>
+                <button
+                    type="button"
+                    role="switch"
+                    class="switch"
+                    [attr.aria-checked]="preferences.locationService()"
+                    aria-labelledby="location-service-title"
+                    aria-describedby="location-service-summary"
+                    (click)="toggleLocationService()"
+                >
+                    <span><app-icon name="check" /></span>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <span class="settings-tile bg-[#FF3B30]"><app-icon name="delete" /></span>
+                <span class="flex min-w-0 flex-1 flex-col">
+                    <span id="confirm-deletion-title" class="text-base">{{ 'confirm_deletion_title' | t }}</span>
+                    <span id="confirm-deletion-summary" class="mt-1 text-xs text-on-surface-variant">{{ 'confirm_deletion_summary' | t }}</span>
+                </span>
+                <button
+                    type="button"
+                    role="switch"
+                    class="switch"
+                    [attr.aria-checked]="preferences.confirmDeletion()"
+                    aria-labelledby="confirm-deletion-title"
+                    aria-describedby="confirm-deletion-summary"
+                    (click)="preferences.setConfirmDeletion(!preferences.confirmDeletion())"
+                >
+                    <span><app-icon name="check" /></span>
+                </button>
+            </div>
+        </section>
+    </div>
+</div>

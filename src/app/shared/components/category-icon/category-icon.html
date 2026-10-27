@@ -1,0 +1,10 @@
+@switch (icon().type) {
+    @case ('icon') {
+        <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true">
+            <path [attr.d]="icon().path" />
+        </svg>
+    }
+    @case ('emoji') {
+        <span class="leading-none" aria-hidden="true">{{ icon().emoji }}</span>
+    }
+}

@@ -1,0 +1,9 @@
+<img src="logo.svg" alt="" width="96" height="96" class="mx-auto size-24" />
+<h1 class="text-2xl font-bold text-center">{{ 'app_name' | t }}</h1>
+
+<hr class="border-outline" />
+
+<div class="grid grid-cols-2 items-center justify-center gap-4">
+    <app-button type="primary" btnType="route" link="/login">{{ 'web_login' | t }}</app-button>
+    <app-button type="secondary" btnType="route" link="/register"><span>{{ 'web_register' | t }}</span></app-button>
+</div>

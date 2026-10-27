@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "yarn"
+    "packageManager": "yarn",
+    "analytics": "aa0728bf-0229-448c-98d5-94a25ca4c9cf"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -14,7 +15,7 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular/build:application",
+          "builder": "@ngx-env/builder:application",
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
@@ -25,8 +26,10 @@
               }
             ],
             "styles": [
-              "src/styles.css"
-            ]
+              "src/styles.css",
+              { "input": "node_modules/leaflet/dist/leaflet.css", "bundleName": "leaflet", "inject": false }
+            ],
+            "allowedCommonJsDependencies": ["leaflet"]
           },
           "configurations": {
             "production": {
@@ -53,7 +56,7 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
+          "builder": "@ngx-env/builder:dev-server",
           "configurations": {
             "production": {
               "buildTarget": "where-is-my-car:build:production"
@@ -62,10 +65,12 @@
               "buildTarget": "where-is-my-car:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {}
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {}
         }
       }
     }

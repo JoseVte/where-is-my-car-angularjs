@@ -1,0 +1,83 @@
+<!-- Top bar from lg, Android bottom navigation below. --app-bottom-nav-height keeps toasts above the bar. -->
+<div class="flex h-dvh flex-col [--app-bottom-nav-height:100px] lg:[--app-bottom-nav-height:0px]">
+    <header class="relative z-[1100] hidden h-14 shrink-0 border-b border-outline bg-surface lg:block">
+        <div class="flex h-full items-center gap-6 px-6">
+            <a routerLink="/map" class="flex shrink-0 items-center gap-3" [attr.aria-label]="'app_name' | t">
+                <img src="logo.svg" alt="" width="40" height="40" class="size-10" />
+                <span class="hidden text-lg font-bold leading-tight xl:block">{{ 'app_name' | t }}</span>
+            </a>
+
+            <nav class="flex flex-1 justify-center gap-1" [attr.aria-label]="'web_sections' | t">
+                @for (item of navItems; track item.label) {
+                    <a
+                        class="flex items-center gap-2 rounded-button px-4 py-2.5 font-semibold text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-on-surface"
+                        [routerLink]="item.link"
+                        routerLinkActive="!bg-primary-fill !text-on-primary"
+                        ariaCurrentWhenActive="page"
+                    >
+                        <app-icon [name]="item.icon" class="text-xl" />
+                        {{ item.label | t }}
+                    </a>
+                }
+            </nav>
+
+            <a
+                routerLink="/settings"
+                routerLinkActive="ring-2 ring-primary ring-offset-2 ring-offset-surface"
+                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-fill font-bold text-on-primary"
+                [attr.aria-label]="'settings' | t"
+                [title]="user()?.email ?? ''"
+            >
+                {{ initial() }}
+            </a>
+        </div>
+    </header>
+
+    <main class="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
+        <router-outlet />
+    </main>
+
+    <!-- Android activity_main bottom navigation: History, center map button, Settings -->
+    <nav class="relative h-(--app-bottom-nav-height) shrink-0 bg-background lg:hidden" [attr.aria-label]="'web_sections' | t">
+        <div class="grid h-full grid-cols-3">
+            <!-- Android nav_item_color: primary when selected, text_secondary otherwise -->
+            <a
+                routerLink="/history"
+                routerLinkActive="!text-primary-text"
+                ariaCurrentWhenActive="page"
+                class="flex flex-col items-center justify-center gap-1 text-on-surface-variant"
+            >
+                <app-icon name="history" class="text-2xl" />
+                <span class="text-[10px] font-medium uppercase">{{ 'history' | t }}</span>
+            </a>
+
+            <!-- Android bg_nav_center_selected, or bg_nav_center_unselected away from the map -->
+            <a
+                routerLink="/map"
+                routerLinkActive
+                #mapLink="routerLinkActive"
+                ariaCurrentWhenActive="page"
+                class="mx-auto flex size-16 items-center justify-center rounded-full border-4 border-on-surface-inverted pb-1 text-[32px] text-white shadow-lg"
+                [class]="mapLink.isActive ? 'bg-primary' : 'bg-on-surface-variant'"
+                [attr.aria-label]="'map' | t"
+            >
+                <app-icon name="map" />
+            </a>
+
+<a
+                routerLink="/settings"
+                ariaCurrentWhenActive="page"
+                class="flex flex-col items-center justify-center gap-1"
+                [class]="onSettingsSection() ? 'text-primary-text' : 'text-on-surface-variant'"
+            >
+                <app-icon name="settings" class="text-2xl" />
+                <span class="text-[10px] font-medium uppercase">{{ 'settings' | t }}</span>
+            </a>
+        </div>
+
+    </nav>
+
+    @if (notice()) {
+        <p class="toast" role="status">{{ notice()! | t }}</p>
+    }
+</div>

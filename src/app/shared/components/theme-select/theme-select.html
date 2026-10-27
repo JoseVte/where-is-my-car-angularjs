@@ -1,0 +1,13 @@
+<label class="inline-flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant">
+    <app-icon name="theme" class="text-lg" />
+    <span class="sr-only">{{ 'theme_mode' | t }}</span>
+    <select
+        class="min-h-11 cursor-pointer rounded-button border border-outline bg-surface px-2 py-1.5 text-on-surface lg:min-h-0 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+        (change)="change($event)"
+    >
+        <!-- selected per option: a [value] on the select is applied before @for renders the options -->
+        @for (option of options; track option.value) {
+            <option [value]="option.value" [selected]="option.value === theme.selection()">{{ option.label | t }}</option>
+        }
+    </select>
+</label>

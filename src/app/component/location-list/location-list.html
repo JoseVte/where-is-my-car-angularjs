@@ -1,0 +1,72 @@
+<ul>
+    @for (location of locations(); track location.id) {
+        <!-- Android item_location -->
+        <li
+            [id]="'location-' + location.id"
+            class="relative mb-3 flex items-center rounded-3xl border bg-surface-container p-3"
+            [class]="selectedId() === location.id ? 'border-primary' : 'border-outline'"
+        >
+            <button type="button" class="flex min-w-0 flex-1 items-center text-left" [attr.aria-current]="selectedId() === location.id" (click)="open.emit(location.id)">
+                <app-map-thumbnail class="rounded-xl" [latitude]="location.latitude" [longitude]="location.longitude" />
+
+                <span class="ml-4 flex min-w-0 flex-1 flex-col">
+                    <span class="flex items-center gap-2">
+                        @if (location.category) {
+                            <span class="badge shrink-0 normal-case tracking-normal" [style.--badge-color]="location.category.color">{{ location.category.label | categoryLabel }}</span>
+                        }
+                        <span class="ml-auto truncate text-xs text-on-surface-variant">{{ location.date | longDate }}</span>
+                    </span>
+                    <span class="mt-1 truncate text-lg font-bold">
+                        @for (part of (location.displayName || ('saved_location_default' | t)) | highlight: query(); track $index) {
+                            <span [class.match]="part.match">{{ part.text }}</span>
+                        }
+                    </span>
+                    @if (location.address) {
+                        <span class="mt-0.5 truncate text-sm text-on-surface-variant">
+                            @for (part of location.address | highlight: query(); track $index) {
+                                <span [class.match]="part.match">{{ part.text }}</span>
+                            }
+                        </span>
+                    }
+                </span>
+            </button>
+
+            <!-- Android button_more -->
+            <button
+                type="button"
+                class="flex size-12 shrink-0 items-center justify-center rounded-full text-2xl text-on-surface-variant"
+                aria-haspopup="menu"
+                [attr.aria-expanded]="openMenuId() === location.id"
+                [attr.aria-label]="'more_options' | t"
+                (click)="toggleMenu(location.id, $event)"
+            >
+                <app-icon name="more" />
+            </button>
+        </li>
+    }
+</ul>
+
+<!-- Android location_item_menu -->
+<div
+    #menu
+    popover="manual"
+    role="menu"
+    class="fixed inset-auto m-0 flex-col rounded-2xl border border-outline bg-surface p-2 text-on-surface shadow-xl [&:popover-open]:flex"
+    [style.top.px]="menuPosition().top"
+    [style.right.px]="menuPosition().right"
+    (click)="$event.stopPropagation()"
+>
+    @if (menuLocation(); as location) {
+        <button type="button" role="menuitem" class="flex min-h-11 min-w-44 items-center gap-3 rounded-xl px-3 text-left hover:bg-surface-variant" (click)="edit(location)">
+            <app-icon name="edit" class="text-xl" /> {{ 'edit' | t }}
+        </button>
+        <button type="button" role="menuitem" class="flex min-h-11 min-w-44 items-center gap-3 rounded-xl px-3 text-left hover:bg-surface-variant" (click)="share(location)">
+            <app-icon name="share" class="text-xl" /> {{ 'share' | t }}
+        </button>
+        <button type="button" role="menuitem" class="flex min-h-11 min-w-44 items-center gap-3 rounded-xl px-3 text-left text-error hover:bg-surface-variant" (click)="askDelete(location)">
+            <app-icon name="delete" class="text-xl" /> {{ 'delete' | t }}
+        </button>
+    }
+</div>
+
+<app-confirm-delete-dialog title="delete_confirmation_title" message="delete_confirmation_message" />

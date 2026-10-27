@@ -1,0 +1,13 @@
+<ng-template #content>
+    <ng-content/>
+</ng-template>
+
+@if (btnType() === 'route') {
+    <a [ngClass]="['btn', type(), disabledClass(), customClass()]" [routerLink]="link()" [routerLinkActive]="[link(), ...activeLink()]">
+        <ng-container [ngTemplateOutlet]="content"/>
+    </a>
+} @else {
+    <button [type]="btnType()" [ngClass]="['btn', type(), disabledClass(), customClass()]" [disabled]="disabled()" (click)="onClickAction.emit()">
+        <ng-container [ngTemplateOutlet]="content"/>
+    </button>
+}

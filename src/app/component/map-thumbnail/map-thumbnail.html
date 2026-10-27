@@ -1,0 +1,7 @@
+<!-- Same dark treatment as the main map (location-map.css), pin centered like the Android item_location -->
+<div class="absolute inset-0 bg-surface-variant dark:[filter:invert(1)_hue-rotate(180deg)_brightness(0.9)_contrast(0.9)]">
+    @for (tile of tiles(); track tile.url) {
+        <img class="absolute max-w-none" [src]="tile.url" alt="" width="256" height="256" loading="lazy" decoding="async" [style.left.px]="tile.left" [style.top.px]="tile.top" />
+    }
+</div>
+<app-icon name="location" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-primary drop-shadow" />

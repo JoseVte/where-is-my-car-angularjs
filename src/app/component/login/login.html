@@ -1,0 +1,56 @@
+<h3 class="text-xl font-bold text-center">{{ 'web_login' | t }}</h3>
+
+<!-- Angular's required and email validators: an invalid form never reaches onLogin() -->
+<form #form="ngForm" class="flex flex-col gap-4" (ngSubmit)="form.valid && onLogin()">
+    <div>
+        <div class="field">
+            <input
+                #email="ngModel"
+                id="email"
+                type="email"
+                class="input"
+                [(ngModel)]="loginObj.email"
+                name="email"
+                placeholder=" "
+                autocomplete="email"
+                required
+                email
+                [attr.aria-invalid]="form.submitted && email.invalid"
+                aria-describedby="email-error"
+            >
+            <label for="email" class="field-label">{{ 'web_email' | t }}</label>
+        </div>
+        @if (form.submitted && email.invalid) {
+            <p id="email-error" class="mt-1 px-1 text-sm text-error">{{ (email.hasError('required') ? 'web_field_required' : 'web_invalid_email') | t }}</p>
+        }
+    </div>
+    <div>
+        <div class="field">
+            <input
+                #password="ngModel"
+                id="password"
+                type="password"
+                class="input"
+                [(ngModel)]="loginObj.password"
+                name="password"
+                placeholder=" "
+                autocomplete="current-password"
+                required
+                [attr.aria-invalid]="form.submitted && password.invalid"
+                aria-describedby="password-error"
+            >
+            <label for="password" class="field-label">{{ 'web_password' | t }}</label>
+        </div>
+        @if (form.submitted && password.invalid) {
+            <p id="password-error" class="mt-1 px-1 text-sm text-error">{{ 'web_field_required' | t }}</p>
+        }
+    </div>
+
+    @if (errorMessage()) {
+        <div class="text-error" role="alert">{{ errorMessage()! | t }}</div>
+    }
+
+    <app-button type="primary" btnType="submit" customClass="w-full">{{ (loading() ? 'web_signing_in' : 'web_login') | t }}</app-button>
+
+    <div class="text-secondary">{{ 'web_no_account' | t }} <a routerLink="/register" class="underline">{{ 'web_register_here' | t }}</a>.</div>
+</form>

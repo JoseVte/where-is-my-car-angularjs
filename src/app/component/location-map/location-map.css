@@ -1,0 +1,97 @@
+/* Unencapsulated so it reaches the DOM Leaflet creates. Plain CSS: @apply adds Tailwind boilerplate per file. */
+app-location-map {
+    display: block;
+    .leaflet-container {
+        background-color: var(--color-surface-variant);
+        font-family: inherit;
+    }
+
+    /* Keep the attribution (and any bottom control) above the mobile bottom sheet */
+    .leaflet-bottom {
+        bottom: var(--map-bottom-inset, 0);
+        transition: bottom 300ms ease;
+    }
+
+    .location-marker {
+        background: transparent;
+        border: 0;
+    }
+
+    /* Teardrop pin in the category color, icon in white */
+    .location-marker-pin {
+        display: flex;
+        width: 2.5rem;
+        height: 2.5rem;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        border-radius: 9999px 9999px 0 9999px;
+        background-color: var(--marker-color);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2);
+        color: white;
+        font-size: 1.125rem;
+        transform: rotate(45deg);
+        transition: scale 150ms ease;
+
+        > svg,
+        > span {
+            transform: rotate(-45deg);
+        }
+
+        &.is-selected {
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 40%, transparent);
+            scale: 1.15;
+        }
+    }
+
+    .route-line {
+        stroke: var(--color-primary);
+        stroke-width: 6;
+        stroke-opacity: 0.85;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+    }
+
+    /* Android numbered step markers: primary circle with the white number */
+    .route-step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        border-radius: 9999px;
+        background-color: var(--color-primary-fill);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .user-position {
+        fill: var(--color-primary);
+        fill-opacity: 1;
+        stroke: white;
+        stroke-width: 3;
+    }
+
+    .user-accuracy {
+        fill: var(--color-primary);
+        fill-opacity: 0.12;
+        stroke: var(--color-primary);
+        stroke-opacity: 0.4;
+        stroke-width: 1;
+    }
+
+    :root[data-theme='dark'] & {
+        /* OpenStreetMap has no dark tiles: invert them so the map matches the dark theme */
+        .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+        }
+
+        .leaflet-control-zoom a,
+        .leaflet-control-attribution {
+            background-color: var(--color-surface);
+            border-color: var(--color-outline);
+            color: var(--color-on-surface);
+        }
+    }
+}

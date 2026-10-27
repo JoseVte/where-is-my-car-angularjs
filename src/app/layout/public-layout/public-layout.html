@@ -1,0 +1,12 @@
+<main class="relative w-full min-h-dvh flex items-center justify-center p-4">
+    <div class="absolute right-4 top-4 flex gap-2">
+        <app-theme-select />
+        <app-language-select />
+    </div>
+
+    <div class="w-full max-w-xl m-auto">
+        <div class="border border-outline bg-surface p-6 rounded-card shadow-sm">
+            <router-outlet/>
+        </div>
+    </div>
+</main>

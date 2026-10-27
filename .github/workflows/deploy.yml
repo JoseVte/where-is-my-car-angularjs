@@ -1,0 +1,60 @@
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Values are baked into the bundle at build time. They are public by nature (they end up in the
+    # browser), so they live in repository variables, not secrets.
+    env:
+      NG_APP_API_URL: ${{ vars.NG_APP_API_URL }}
+      NG_APP_FIREBASE_API_KEY: ${{ vars.NG_APP_FIREBASE_API_KEY }}
+      NG_APP_FIREBASE_AUTH_DOMAIN: ${{ vars.NG_APP_FIREBASE_AUTH_DOMAIN }}
+      NG_APP_FIREBASE_PROJECT_ID: ${{ vars.NG_APP_FIREBASE_PROJECT_ID }}
+      NG_APP_VERSION: ${{ github.sha }}
+      NG_APP_COMMIT: ${{ github.sha }}
+      NG_APP_ENABLE_SENTRY: 'false'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+      - run: yarn test --watch=false
+      - run: yarn build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/where-is-my-car/browser
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/where-is-my-car/browser
+
+      # Pull requests get a temporary preview URL; main goes live
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: where-is-my-car-486413
+          channelId: ${{ github.event_name == 'push' && 'live' || '' }}

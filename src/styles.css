@@ -1,1 +1,268 @@
 /* You can add global styles to this file, and also import other style files */
+
+@import 'tailwindcss';
+
+/* The theme is chosen in the app (Theme service sets data-theme on <html>), not only by the system */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Colors mirror the Android app (res/values/colors.xml and res/values-night/colors.xml) */
+@theme {
+    /* Android primary: icons, pins and large text (3:1) */
+    --color-primary: #E65100;
+    /* Darkest step needed for 4.5:1: fills behind small white text, and small orange text */
+    --color-primary-fill: #D14900;
+    --color-primary-text: #B43F00;
+    --color-on-primary: #FFFFFF;
+    --color-secondary: #795548;
+    --color-tertiary: #E91E63;
+    --color-error: #B00020;
+
+    --color-background: #FFFBF0;
+    --color-surface: #FFFFFF;
+    --color-surface-variant: #EBE3D5;
+    --color-surface-variant-strong: #D6CDC0;
+    --color-on-surface: #2C1B00;
+    /* Android text_secondary (#7D6E5D) darkened to reach 4.5:1 on bg_gray */
+    --color-on-surface-variant: #6E604F;
+    /* Android text_primary_inverted: ring of the center navigation button */
+    --color-on-surface-inverted: #FFFFFF;
+    --color-outline: #E0D7C6;
+    /* Android bg_gray: list cards and the floating search card */
+    --color-surface-container: #EDE7DE;
+    /* Android bg_drag_gray: bottom sheet handle */
+    --color-drag-handle: rgb(44 27 0 / 0.3);
+
+    --radius-card: 16px;
+    --radius-button: 12px;
+}
+
+@layer base {
+    :root {
+        color-scheme: light;
+    }
+
+    :root[data-theme='dark'] {
+        color-scheme: dark;
+
+        --color-primary: #F4511E;
+        --color-primary-fill: #DB3C0B;
+        --color-primary-text: #F56233;
+        --color-secondary: #BCAAA4;
+        --color-tertiary: #F472B6;
+
+        --color-background: #12100E;
+        --color-surface: #1C1917;
+        --color-surface-variant: #2E2A27;
+        --color-surface-variant-strong: #44403C;
+        --color-on-surface: #F5F5F4;
+        --color-on-surface-variant: #A8A29E;
+        /* Android keeps #B00020 at night, which is 2:1 on the dark surfaces */
+        --color-error: #FFB4AB;
+        --color-on-surface-inverted: #2C1B00;
+        --color-outline: #3F3A36;
+        --color-surface-container: #262320;
+        --color-drag-handle: rgb(245 245 244 / 0.3);
+    }
+
+    body {
+        @apply bg-background text-on-surface antialiased;
+    }
+
+    /* Tailwind v4 preflight leaves buttons with the default cursor: every enabled control shows the hand */
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']),
+    [role='menuitem'],
+    a[href],
+    select:not(:disabled),
+    summary,
+    label[for] {
+        cursor: pointer;
+    }
+}
+
+/* Based on Material Tailwind v3 button and input, kept in the components layer so utilities can override them */
+@layer components {
+    /* Page header title, the same size on every screen */
+    .page-title {
+        @apply text-lg font-bold lg:text-2xl;
+    }
+
+    .btn {
+        @apply flex w-fit mx-auto items-center justify-center border align-middle select-none font-sans font-semibold text-center transition-all duration-300 ease-in text-sm py-2.5 px-5 rounded-button shadow-sm hover:shadow-md focus:shadow-none border-primary-fill bg-primary-fill text-on-primary hover:brightness-95;
+    }
+
+    .btn-primary {
+        @apply border-primary-fill bg-primary-fill text-on-primary;
+    }
+
+    .btn-secondary {
+        @apply border-surface-variant bg-surface-variant text-secondary hover:bg-surface-variant-strong hover:brightness-100;
+    }
+
+    /* Outlined text field (Material 3 OutlinedBox): the input needs placeholder=" " and the label must come right after it */
+    .field {
+        @apply relative w-full;
+    }
+
+    .input {
+        @apply w-full outline-none text-on-surface placeholder:text-transparent border border-outline transition-all ease-in duration-100 disabled:opacity-50 px-4 pt-4 pb-3 bg-transparent rounded-button hover:border-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary;
+    }
+
+    .field-label {
+        @apply pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 px-1 bg-surface text-on-surface-variant transition-all duration-150 ease-in;
+    }
+
+    .input:focus + .field-label,
+    .input:not(:placeholder-shown) + .field-label {
+        @apply top-0 text-xs;
+    }
+
+    .input:focus + .field-label {
+        @apply text-primary-text;
+    }
+
+    .card {
+        @apply rounded-card border border-outline bg-surface p-4;
+    }
+
+    .alert {
+        @apply rounded-button border border-error/30 bg-error/10 px-4 py-3 text-sm text-error;
+    }
+
+    /* Android search card: bg_gray with the search icon */
+    .search-field {
+        @apply flex items-center gap-3 rounded-button bg-surface-variant px-4 py-3 text-lg focus-within:ring-2 focus-within:ring-primary;
+
+        input {
+            @apply w-full bg-transparent text-base outline-none placeholder:text-on-surface-variant;
+        }
+    }
+
+    /* Filter chip, colored with --chip-color when active */
+    .chip {
+        --chip-color: var(--color-primary);
+        @apply inline-flex items-center gap-1.5 rounded-full border border-outline px-3 py-1 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-variant;
+
+        &.is-active {
+            @apply border-transparent;
+            background-color: color-mix(in srgb, var(--chip-color) 20%, transparent);
+            color: color-mix(in srgb, var(--chip-color) 40%, var(--color-on-surface));
+        }
+    }
+
+    .chip-dot {
+        @apply size-2 rounded-full;
+        background-color: var(--chip-color);
+    }
+
+    .chip-count {
+        @apply text-xs opacity-70;
+    }
+
+    /* Android setupBadge, with the text pulled toward on-surface so any category color reaches 4.5:1 */
+    .badge {
+        --badge-color: var(--color-on-surface-variant);
+        @apply w-fit rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide;
+        color: color-mix(in srgb, var(--badge-color) 40%, var(--color-on-surface));
+        background-color: color-mix(in srgb, var(--badge-color) 20%, transparent);
+    }
+
+    /* Small tonal button for card actions */
+    .action {
+        @apply inline-flex items-center gap-1.5 rounded-button bg-surface-variant px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-surface-variant-strong;
+
+        &.action-link {
+            @apply bg-transparent px-1 text-primary-text hover:bg-transparent hover:underline;
+        }
+
+        &.icon-only {
+            @apply px-2 text-base;
+        }
+    }
+
+    /* Android createFilterChip: --chip-color at 15% when off, solid with --chip-on text when selected */
+    .filter-chip {
+        --chip-color: var(--color-on-surface);
+        --chip-on: var(--color-on-primary);
+        @apply inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors;
+        background-color: color-mix(in srgb, var(--chip-color) 15%, transparent);
+        color: color-mix(in srgb, var(--chip-color) 40%, var(--color-on-surface));
+
+        &.is-selected {
+            background-color: var(--chip-color);
+            color: var(--chip-on);
+        }
+    }
+
+    /* Android SettingsTitleView: section header above each settings card */
+    .settings-header {
+        @apply mb-3 mt-7 px-4 text-xs font-bold uppercase text-on-surface-variant;
+    }
+
+    /* Android pref_app_settings_card row: 32dp tile with a white icon, title and summary */
+    .settings-row {
+        @apply flex min-h-11 items-center gap-3 p-4;
+    }
+
+    .settings-tile {
+        @apply flex size-8 shrink-0 items-center justify-center rounded-2xl text-lg text-white;
+    }
+
+    /* Android ToggleButton group: three equal options, exactly one selected */
+    .segmented {
+        @apply grid grid-flow-col auto-cols-fr gap-2;
+
+        > button {
+            @apply min-h-11 rounded-lg bg-surface-variant-strong px-2 text-xs font-semibold text-on-surface transition-colors;
+
+            &[aria-checked='true'] {
+                @apply bg-primary-fill text-on-primary;
+            }
+        }
+    }
+
+    /* Android Widget.App.Switch (Material 3, check in the thumb when on) */
+    .switch {
+        @apply relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border-2 border-surface-variant-strong bg-surface-variant transition-colors;
+
+        > span {
+            @apply ml-1 flex size-4 items-center justify-center rounded-full bg-on-surface-variant text-[0.75rem] text-transparent transition-all;
+        }
+
+        &[aria-checked='true'] {
+            @apply border-primary-fill bg-primary-fill;
+
+            > span {
+                @apply ml-6 size-5 bg-white text-primary-fill;
+            }
+        }
+    }
+
+    /* Android item_icon_picker: 56dp card, 16dp corners, primary when selected */
+    .icon-cell {
+        @apply flex aspect-square w-full max-w-14 items-center justify-center justify-self-center rounded-2xl border border-outline bg-surface text-on-surface-variant transition-colors hover:border-primary;
+
+        &.is-selected {
+            @apply border-primary-fill bg-primary-fill text-on-primary;
+        }
+    }
+
+    /* Android createActiveFilterChip: outlined in its color, tapping it removes the filter */
+    .active-filter-chip {
+        --chip-color: var(--color-primary);
+        @apply inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold;
+        border-color: var(--chip-color);
+        background-color: color-mix(in srgb, var(--chip-color) 15%, transparent);
+        color: color-mix(in srgb, var(--chip-color) 40%, var(--color-on-surface));
+    }
+
+    /* Search match, bold and underlined like the Android LocationAdapter */
+    .match {
+        @apply font-bold underline;
+    }
+
+    /* Above the mobile bottom navigation when there is one (--app-bottom-nav-height, set by the layout) */
+    .toast {
+        @apply pointer-events-none fixed bottom-[calc(var(--app-bottom-nav-height,0px)+1.5rem)] left-1/2 z-[2000] -translate-x-1/2 rounded-full bg-on-surface px-5 py-2.5 text-sm font-semibold text-background shadow-lg;
+    }
+}
